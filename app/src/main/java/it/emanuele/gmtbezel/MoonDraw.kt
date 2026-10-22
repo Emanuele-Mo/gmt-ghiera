@@ -19,9 +19,9 @@ import kotlin.math.sqrt
 object MoonDraw {
 
     // Posizione della Luna nel quadrante (pixel su 450x450, dal pannello Properties di WFS)
-    const val FACE_X = 240
-    const val FACE_Y = 262
-    const val FACE_D = 90                 // diametro
+    const val FACE_X = 235
+    const val FACE_Y = 269
+    const val FACE_D = 101                // diametro
 
     const val NIGHT_ALPHA = 240           // 0..255: oscurita' della parte in ombra (255 = nero pieno)
     const val TERMINATOR_SOFT = 0.03f     // morbidezza del terminatore, in frazione del diametro
