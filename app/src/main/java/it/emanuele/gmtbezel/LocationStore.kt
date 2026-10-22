@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.CancellationSignal
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
@@ -33,6 +34,31 @@ object LocationStore {
             Place(p.getFloat("lat", 0f).toDouble(), p.getFloat("lon", 0f).toDouble(), true)
         } else {
             Place(ROMA_LAT, ROMA_LON, false)
+        }
+    }
+
+    private val bg = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+    @Volatile private var refreshing = false
+
+    /** Aggiorna la posizione in sottofondo (se vecchia) e poi chiede di ridisegnare la ghiera. */
+    fun refreshInBackground(ctx: Context) {
+        val app = ctx.applicationContext
+        val age = System.currentTimeMillis() -
+            app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong("time", 0L)
+        if (refreshing || age < MAX_AGE_MS || !hasPermission(app)) return
+        refreshing = true
+        bg.launch {
+            try {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { get(app, force = true) }
+                androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester.create(
+                    app, android.content.ComponentName(app, BezelComplicationService::class.java)
+                ).requestUpdateAll()
+            } catch (e: Exception) {
+                android.util.Log.w("GmtGhiera", "posizione non aggiornata", e)
+            } finally {
+                refreshing = false
+            }
         }
     }
 

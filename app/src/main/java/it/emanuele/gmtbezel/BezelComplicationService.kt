@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.drawable.Icon
+import android.util.Log
 import androidx.wear.watchface.complications.data.ComplicationData
 import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.data.PhotoImageComplicationData
@@ -28,6 +29,7 @@ import java.time.ZoneId
 class BezelComplicationService : SuspendingComplicationDataSourceService() {
 
     companion object {
+        const val TAG = "GmtGhiera"
         const val SIZE = 450                     // lato della bitmap in pixel
         const val RING = 40f                     // spessore dell'anello
         val COLOR_NIGHT = Color.rgb(20, 60, 200) // blu notte
@@ -111,9 +113,10 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
             c.drawBitmap(it, null, Rect(0, 0, SIZE, SIZE), Paint(Paint.FILTER_BITMAP_FLAG))
         }
         if (DRAW_NUMBERS) drawNumbers(c)
-        heart?.let { HeartGauge.drawOnFace(c, it) }   // gauge del battito nella sua posizione
+        // ogni parte e' protetta: se una va in errore, il resto dell'immagine compare comunque
+        heart?.let { h -> safe("cuore") { HeartGauge.drawOnFace(c, h) } }
         val foto = lunaFoto
-        if (moon != null && foto != null) MoonDraw.draw(c, foto, moon)   // luna con fase e orientamento reali
+        if (moon != null && foto != null) safe("luna") { MoonDraw.draw(c, foto, moon) }
         return Icon.createWithBitmap(bmp)
     }
 
@@ -122,15 +125,33 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
         return SunCalc.compute(LocalDate.now(zone), place.lat, place.lon, zone)
     }
 
-    override fun getPreviewData(type: ComplicationType): ComplicationData? =
-        build(type, draw(SunDay.Normal(7.5, 18.25), HeartStore.Today(52, 148, 70),
-            MoonCalc.compute(System.currentTimeMillis(), 41.9, 12.5)))
+    override fun getPreviewData(type: ComplicationType): ComplicationData? {
+        val sun = SunDay.Normal(7.5, 18.25)
+        val icon = runCatching {
+            draw(sun, HeartStore.Today(52, 148, 70), MoonCalc.compute(System.currentTimeMillis(), 41.9, 12.5))
+        }.getOrElse { Log.e(TAG, "anteprima", it); draw(sun, null, null) }
+        return build(type, icon)
+    }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
-        HeartStore.register(this)   // rinnova il monitoraggio del battito (es. dopo un riavvio)
-        val place = LocationStore.get(this)
-        val moon = MoonCalc.compute(System.currentTimeMillis(), place.lat, place.lon)
-        return build(request.complicationType, draw(sunToday(place), HeartStore.today(this), moon))
+        // Risposta immediata con la posizione salvata: il quadrante non deve mai aspettare il GPS
+        val place = LocationStore.cached(this)
+        LocationStore.refreshInBackground(this)        // se e' vecchia, la aggiorna dopo e ridisegna
+        safe("battito") { HeartStore.register(this) }  // rinnova il monitoraggio (es. dopo un riavvio)
+
+        val sun = runCatching { sunToday(place) }.getOrElse { Log.w(TAG, "sole", it); SunDay.Normal(7.0, 18.0) }
+        val heart = runCatching { HeartStore.today(this) }.getOrNull()
+        val moon = runCatching { MoonCalc.compute(System.currentTimeMillis(), place.lat, place.lon) }
+            .onFailure { Log.w(TAG, "calcolo luna", it) }.getOrNull()
+        val icon = runCatching { draw(sun, heart, moon) }.getOrElse {
+            Log.e(TAG, "disegno completo fallito, riprovo senza extra", it)
+            draw(sun, null, null)
+        }
+        return build(request.complicationType, icon)
+    }
+
+    private inline fun safe(what: String, block: () -> Unit) {
+        try { block() } catch (e: Throwable) { Log.w(TAG, "errore nel disegno: $what", e) }
     }
 
     private fun build(type: ComplicationType, icon: Icon): ComplicationData? {
