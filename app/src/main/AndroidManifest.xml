@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-feature android:name="android.hardware.type.watch" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application android:label="GMT Ghiera" android:icon="@android:drawable/ic_menu_compass">
+        <meta-data android:name="com.google.android.wearable.standalone" android:value="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="GMT Ghiera"
+            android:theme="@android:style/Theme.DeviceDefault">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".BezelComplicationService"
             android:exported="true"
-            android:label="Ghiera GMT (test)"
+            android:label="Ghiera GMT"
             android:icon="@android:drawable/ic_menu_compass"
             android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
             <intent-filter>
@@ -14,7 +29,7 @@
             <meta-data android:name="android.support.wearable.complications.SUPPORTED_TYPES"
                 android:value="PHOTO_IMAGE,SMALL_IMAGE" />
             <meta-data android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
-                android:value="300" />
+                android:value="1800" />
         </service>
     </application>
 </manifest>
