@@ -9,8 +9,17 @@ android {
         applicationId = "it.emanuele.gmtbezel"
         minSdk = 30
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2-alba-tramonto"
+        versionCode = 5
+        versionName = "0.5-senza-riflesso"
+    }
+    signingConfigs {
+        // chiave fissa: tutte le build hanno la stessa firma e "adb install -r" funziona sempre
+        getByName("debug") {
+            storeFile = file("gmt-debug.keystore")
+            storePassword = "android"
+            keyAlias = "gmtdebug"
+            keyPassword = "android"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -21,4 +30,6 @@ android {
 dependencies {
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.health:health-services-client:1.0.0-rc02")
+    implementation("com.google.guava:guava:33.0.0-android")
 }

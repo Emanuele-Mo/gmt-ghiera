@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+
+    <queries>
+        <package android:name="com.google.android.wearable.healthservices" />
+    </queries>
 
     <application android:label="GMT Ghiera" android:icon="@android:drawable/ic_menu_compass">
         <meta-data android:name="com.google.android.wearable.standalone" android:value="true" />
@@ -31,5 +36,25 @@
             <meta-data android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="1800" />
         </service>
+
+        <service
+            android:name=".HeartComplicationService"
+            android:exported="true"
+            android:label="Battito min/max"
+            android:icon="@android:drawable/ic_menu_today"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SMALL_IMAGE,SHORT_TEXT,LONG_TEXT" />
+            <meta-data android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="900" />
+        </service>
+
+        <service
+            android:name=".HeartListenerService"
+            android:exported="true"
+            android:permission="com.google.android.wearable.healthservices.permission.PASSIVE_DATA_BINDING" />
     </application>
 </manifest>

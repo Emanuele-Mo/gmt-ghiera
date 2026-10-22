@@ -1,6 +1,9 @@
 package it.emanuele.gmtbezel
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -29,6 +32,35 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
         const val RING = 40f                     // spessore dell'anello
         val COLOR_NIGHT = Color.rgb(20, 60, 200) // blu notte
         val COLOR_DAY = Color.rgb(200, 30, 30)   // rosso giorno
+
+        const val DRAW_RIFLESSO = false          // riflesso semitrasparente sopra i colori
+        const val DRAW_NUMBERS = true            // numeri delle ore 24h sopra i colori
+        const val NUMBER_SIZE = 32f              // altezza del testo dei numeri
+        val COLOR_NUMBERS = Color.WHITE
+        val NUMBERS = listOf(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24)
+    }
+
+    private val riflesso: Bitmap? by lazy {
+        runCatching { BitmapFactory.decodeResource(resources, R.drawable.riflesso_ghiera) }.getOrNull()
+    }
+
+    /** Numeri sull'anello, orientati come una ghiera (base verso il centro). */
+    private fun drawNumbers(c: Canvas) {
+        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = COLOR_NUMBERS
+            textSize = NUMBER_SIZE
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+        }
+        val cx = SIZE / 2f
+        val radius = SIZE / 2f - RING / 2f                    // centro dell'anello
+        val baseline = cx - radius - (p.ascent() + p.descent()) / 2f
+        for (h in NUMBERS) {
+            c.save()
+            c.rotate((h % 24) * 15f, cx, cx)
+            c.drawText(h.toString(), cx, baseline, p)
+            c.restore()
+        }
     }
 
     /** Ora locale (0-24) -> angolo Android (0 = ore 3 del quadrante, senso orario). */
@@ -63,6 +95,10 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
                 c.drawArc(oval, angle(sun.sunrise), daySweep, false, p)
             }
         }
+        if (DRAW_RIFLESSO) riflesso?.let {
+            c.drawBitmap(it, null, Rect(0, 0, SIZE, SIZE), Paint(Paint.FILTER_BITMAP_FLAG))
+        }
+        if (DRAW_NUMBERS) drawNumbers(c)
         return Icon.createWithBitmap(bmp)
     }
 

@@ -2,6 +2,7 @@ package it.emanuele.gmtbezel
 
 import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
 import android.content.ComponentName
 import android.graphics.Color
 import android.os.Bundle
@@ -48,16 +49,23 @@ class MainActivity : Activity() {
         }
         setContentView(ScrollView(this).apply { setBackgroundColor(Color.BLACK); addView(col) })
 
-        if (LocationStore.hasPermission(this)) {
+        val missing = listOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BODY_SENSORS
+        ).filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+
+        if (missing.isEmpty()) {
+            HeartStore.register(this)
             refresh(force = true)
         } else {
-            status.text = "Serve il permesso di posizione per calcolare alba e tramonto."
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
+            status.text = "Servono i permessi di posizione (alba e tramonto) e sensori (battito)."
+            requestPermissions(missing.toTypedArray(), 1)
         }
     }
 
     override fun onRequestPermissionsResult(code: Int, perms: Array<out String>, results: IntArray) {
         super.onRequestPermissionsResult(code, perms, results)
+        HeartStore.register(this)
         refresh(force = true)
     }
 
@@ -80,13 +88,20 @@ class MainActivity : Activity() {
                 is SunDay.PolarDay -> "Il sole non tramonta oggi"
                 is SunDay.PolarNight -> "Il sole non sorge oggi"
             }
-            status.text = "$where\nFuso: ${zone.id}\n\n$times\n"
+            val heart = when {
+                !HeartStore.hasPermission(this@MainActivity) -> "Battito: permesso sensori mancante"
+                else -> HeartStore.today(this@MainActivity)
+                    ?.let { "Battito oggi: min ${it.min}, max ${it.max}" }
+                    ?: "Battito: in attesa dei primi campioni"
+            }
+            status.text = "$where\nFuso: ${zone.id}\n\n$times\n\n$heart\n"
 
             // chiede al quadrante di ridisegnare subito la ghiera
             ComplicationDataSourceUpdateRequester.create(
                 this@MainActivity,
                 ComponentName(this@MainActivity, BezelComplicationService::class.java)
             ).requestUpdateAll()
+            HeartStore.requestComplicationUpdate(this@MainActivity)
         }
     }
 
