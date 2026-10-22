@@ -14,6 +14,10 @@ jobs:
           curl -fsSL -o sorgenti/moon_mosaic_print.jpg \
             https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005001/moon_mosaic_print.jpg
           ls -la sorgenti
+          # Mappa a colori LRO (CGI Moon Kit, NASA SVS 4720), proiezione cilindrica centrata su long. 0
+          curl -fsSL -o sorgenti/lroc_color_2k.jpg \
+            https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg
+          ls -la sorgenti
           git config user.name "github-actions[bot]"
           git config user.email "41898900+github-actions[bot]@users.noreply.github.com"
           git add sorgenti
