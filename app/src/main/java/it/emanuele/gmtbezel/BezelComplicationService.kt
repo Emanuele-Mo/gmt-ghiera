@@ -34,7 +34,8 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
         val COLOR_DAY = Color.rgb(200, 30, 30)   // rosso giorno
 
         const val DRAW_RIFLESSO = false          // riflesso semitrasparente sopra i colori
-        const val DRAW_NUMBERS = true            // numeri delle ore 24h sopra i colori
+        const val DRAW_TACCHE = true             // immagine originale di numeri e divisioni (tacche_numeri.png)
+        const val DRAW_NUMBERS = false           // numeri disegnati dall'app (alternativa)
         const val NUMBER_SIZE = 32f              // altezza del testo dei numeri
         val COLOR_NUMBERS = Color.WHITE
         val NUMBERS = listOf(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24)
@@ -42,6 +43,10 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
 
     private val riflesso: Bitmap? by lazy {
         runCatching { BitmapFactory.decodeResource(resources, R.drawable.riflesso_ghiera) }.getOrNull()
+    }
+
+    private val tacche: Bitmap? by lazy {
+        runCatching { BitmapFactory.decodeResource(resources, R.drawable.tacche_numeri) }.getOrNull()
     }
 
     /** Numeri sull'anello, orientati come una ghiera (base verso il centro). */
@@ -96,6 +101,9 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
             }
         }
         if (DRAW_RIFLESSO) riflesso?.let {
+            c.drawBitmap(it, null, Rect(0, 0, SIZE, SIZE), Paint(Paint.FILTER_BITMAP_FLAG))
+        }
+        if (DRAW_TACCHE) tacche?.let {
             c.drawBitmap(it, null, Rect(0, 0, SIZE, SIZE), Paint(Paint.FILTER_BITMAP_FLAG))
         }
         if (DRAW_NUMBERS) drawNumbers(c)

@@ -47,7 +47,7 @@ object HeartStore {
         }
     }
 
-    /** Aggiunge un campione; restituisce true se il minimo o il massimo sono cambiati. */
+    /** Aggiunge un campione; restituisce true se minimo, massimo o valore attuale sono cambiati. */
     fun add(ctx: Context, bpm: Double, time: Instant): Boolean {
         if (bpm < 25 || bpm > 250) return false          // scarta letture assurde
         val zone = ZoneId.systemDefault()
@@ -60,7 +60,9 @@ object HeartStore {
         val newDay = sampleDay > day
         val min = if (newDay) v else minOf(p.getInt("min", v), v)
         val max = if (newDay) v else maxOf(p.getInt("max", v), v)
-        val changed = newDay || min != p.getInt("min", -1) || max != p.getInt("max", -1)
+        // aggiorna anche quando cambia il valore attuale, per spostare il pallino
+        val changed = newDay || min != p.getInt("min", -1) || max != p.getInt("max", -1) ||
+            v != p.getInt("last", -1)
         p.edit()
             .putLong("day", sampleDay)
             .putInt("min", min)
