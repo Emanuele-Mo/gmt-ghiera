@@ -94,7 +94,10 @@ class MainActivity : Activity() {
                     ?.let { "Battito oggi: min ${it.min}, max ${it.max}" }
                     ?: "Battito: in attesa dei primi campioni"
             }
-            status.text = "$where\nFuso: ${zone.id}\n\n$times\n\n$heart\n"
+            val m = MoonCalc.compute(System.currentTimeMillis(), place.lat, place.lon)
+            val moonTxt = String.format(Locale.ITALY, "Luna: %s, %d%% illuminata",
+                if (m.waxing) "crescente" else "calante", Math.round(m.illuminated * 100))
+            status.text = "$where\nFuso: ${zone.id}\n\n$times\n\n$moonTxt\n\n$heart\n"
 
             // chiede al quadrante di ridisegnare subito la ghiera
             ComplicationDataSourceUpdateRequester.create(

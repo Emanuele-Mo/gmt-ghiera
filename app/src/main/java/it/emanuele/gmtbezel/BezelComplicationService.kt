@@ -45,6 +45,10 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
         runCatching { BitmapFactory.decodeResource(resources, R.drawable.riflesso_ghiera) }.getOrNull()
     }
 
+    private val lunaFoto: Bitmap? by lazy {
+        runCatching { BitmapFactory.decodeResource(resources, R.drawable.luna) }.getOrNull()
+    }
+
     private val tacche: Bitmap? by lazy {
         runCatching { BitmapFactory.decodeResource(resources, R.drawable.tacche_numeri) }.getOrNull()
     }
@@ -71,7 +75,7 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
     /** Ora locale (0-24) -> angolo Android (0 = ore 3 del quadrante, senso orario). */
     private fun angle(hour: Double): Float = (hour * 15.0 - 90.0).toFloat()
 
-    private fun draw(sun: SunDay, heart: HeartStore.Today?): Icon {
+    private fun draw(sun: SunDay, heart: HeartStore.Today?, moon: MoonCalc.State?): Icon {
         val bmp = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -108,6 +112,8 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
         }
         if (DRAW_NUMBERS) drawNumbers(c)
         heart?.let { HeartGauge.drawOnFace(c, it) }   // gauge del battito nella sua posizione
+        val foto = lunaFoto
+        if (moon != null && foto != null) MoonDraw.draw(c, foto, moon)   // luna con fase e orientamento reali
         return Icon.createWithBitmap(bmp)
     }
 
@@ -117,12 +123,14 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
     }
 
     override fun getPreviewData(type: ComplicationType): ComplicationData? =
-        build(type, draw(SunDay.Normal(7.5, 18.25), HeartStore.Today(52, 148, 70)))
+        build(type, draw(SunDay.Normal(7.5, 18.25), HeartStore.Today(52, 148, 70),
+            MoonCalc.compute(System.currentTimeMillis(), 41.9, 12.5)))
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         HeartStore.register(this)   // rinnova il monitoraggio del battito (es. dopo un riavvio)
         val place = LocationStore.get(this)
-        return build(request.complicationType, draw(sunToday(place), HeartStore.today(this)))
+        val moon = MoonCalc.compute(System.currentTimeMillis(), place.lat, place.lon)
+        return build(request.complicationType, draw(sunToday(place), HeartStore.today(this), moon))
     }
 
     private fun build(type: ComplicationType, icon: Icon): ComplicationData? {
