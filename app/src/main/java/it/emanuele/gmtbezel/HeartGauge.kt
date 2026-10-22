@@ -18,8 +18,8 @@ object HeartGauge {
 
     // Geometria del gauge del cuore nel quadrante (da regolare se serve)
     const val SIZE = 200          // il gauge si disegna a 200x200 e poi si riduce a FACE_W x FACE_H
-    const val BAND = 30f          // spessore della banda (su 200 px: circa 15 px sul quadrante)
-    const val INSET = 0f          // distanza della banda dal bordo dello slot
+    const val BAND = 23f          // spessore: copre l'anello grigio (11,5 px su 101 = 23 su 200)
+    const val INSET = 2f          // l'anello grigio parte a 1 px dal bordo (2 su 200)
     const val GAUGE_MIN = 40.0    // bpm all'inizio del gauge
     const val GAUGE_MAX = 200.0   // bpm alla fine del gauge
     const val START = 225.0       // inizio del gauge, gradi da ore 12 in senso orario
@@ -30,7 +30,7 @@ object HeartGauge {
 
     // Pallino del battito attuale
     const val DRAW_DOT = true
-    const val DOT_RADIUS = BAND / 2f - 3f   // poco piu' piccolo della banda: resta dentro
+    const val DOT_RADIUS = BAND / 2f - 3f   // circa 8,5 px di diametro sul quadrante, dentro la fascia
     val COLOR_DOT = Color.WHITE
     val COLOR_DOT_BORDER = Color.rgb(220, 20, 20)
 
@@ -73,7 +73,7 @@ object HeartGauge {
                 val dot = Paint(Paint.ANTI_ALIAS_FLAG)
                 dot.style = Paint.Style.FILL; dot.color = COLOR_DOT
                 c.drawCircle(x, y, DOT_RADIUS, dot)
-                dot.style = Paint.Style.STROKE; dot.strokeWidth = 4f; dot.color = COLOR_DOT_BORDER
+                dot.style = Paint.Style.STROKE; dot.strokeWidth = 3f; dot.color = COLOR_DOT_BORDER
                 c.drawCircle(x, y, DOT_RADIUS, dot)
             }
         }
