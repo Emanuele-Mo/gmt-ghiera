@@ -32,7 +32,6 @@ object HeartGauge {
     const val DRAW_DOT = true
     const val DOT_RADIUS = BAND / 2f - 3f   // circa 8,5 px di diametro sul quadrante, dentro la fascia
     val COLOR_DOT = Color.WHITE
-    val COLOR_DOT_BORDER = Color.rgb(220, 20, 20)
 
     /** bpm -> angolo Android (0 = ore 3, senso orario). */
     private fun angle(bpm: Double): Float {
@@ -58,7 +57,7 @@ object HeartGauge {
             }
             c.drawArc(oval, a1, sweep, false, p)
 
-            // pallino del valore attuale, sull'asse della banda e sempre dentro la fascia rossa
+            // pallino bianco pieno (senza contorno) del valore attuale, sull'asse della banda e sempre dentro la fascia rossa
             if (DRAW_DOT && t.last > 0) {
                 val rr = cx - r
                 // margine in gradi pari al raggio del pallino: non tocca mai le estremita' della fascia
@@ -72,8 +71,6 @@ object HeartGauge {
                 val y = cx + (rr * Math.sin(a)).toFloat()
                 val dot = Paint(Paint.ANTI_ALIAS_FLAG)
                 dot.style = Paint.Style.FILL; dot.color = COLOR_DOT
-                c.drawCircle(x, y, DOT_RADIUS, dot)
-                dot.style = Paint.Style.STROKE; dot.strokeWidth = 3f; dot.color = COLOR_DOT_BORDER
                 c.drawCircle(x, y, DOT_RADIUS, dot)
             }
         }

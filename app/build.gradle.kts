@@ -9,8 +9,8 @@ android {
         applicationId = "it.emanuele.gmtbezel"
         minSdk = 30
         targetSdk = 34
-        versionCode = 16
-        versionName = "1.6-gauge-misure-esatte"
+        versionCode = 17
+        versionName = "1.7-pallino-bianco"
     }
     signingConfigs {
         // chiave fissa: tutte le build hanno la stessa firma e "adb install -r" funziona sempre
