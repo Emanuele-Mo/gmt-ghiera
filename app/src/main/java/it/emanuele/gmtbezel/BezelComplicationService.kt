@@ -71,7 +71,7 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
     /** Ora locale (0-24) -> angolo Android (0 = ore 3 del quadrante, senso orario). */
     private fun angle(hour: Double): Float = (hour * 15.0 - 90.0).toFloat()
 
-    private fun draw(sun: SunDay): Icon {
+    private fun draw(sun: SunDay, heart: HeartStore.Today?): Icon {
         val bmp = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -107,6 +107,7 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
             c.drawBitmap(it, null, Rect(0, 0, SIZE, SIZE), Paint(Paint.FILTER_BITMAP_FLAG))
         }
         if (DRAW_NUMBERS) drawNumbers(c)
+        heart?.let { HeartGauge.drawOnFace(c, it) }   // gauge del battito nella sua posizione
         return Icon.createWithBitmap(bmp)
     }
 
@@ -116,11 +117,12 @@ class BezelComplicationService : SuspendingComplicationDataSourceService() {
     }
 
     override fun getPreviewData(type: ComplicationType): ComplicationData? =
-        build(type, draw(SunDay.Normal(7.5, 18.25)))
+        build(type, draw(SunDay.Normal(7.5, 18.25), HeartStore.Today(52, 148, 70)))
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
+        HeartStore.register(this)   // rinnova il monitoraggio del battito (es. dopo un riavvio)
         val place = LocationStore.get(this)
-        return build(request.complicationType, draw(sunToday(place)))
+        return build(request.complicationType, draw(sunToday(place), HeartStore.today(this)))
     }
 
     private fun build(type: ComplicationType, icon: Icon): ComplicationData? {

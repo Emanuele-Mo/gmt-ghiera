@@ -79,9 +79,10 @@ object HeartStore {
         return Today(p.getInt("min", 0), p.getInt("max", 0), p.getInt("last", 0))
     }
 
+    /** Ridisegna sia la ghiera (che contiene il gauge) sia la complicazione separata del battito. */
     fun requestComplicationUpdate(ctx: Context) {
-        ComplicationDataSourceUpdateRequester.create(
-            ctx, ComponentName(ctx, HeartComplicationService::class.java)
-        ).requestUpdateAll()
+        for (cls in listOf(BezelComplicationService::class.java, HeartComplicationService::class.java)) {
+            ComplicationDataSourceUpdateRequester.create(ctx, ComponentName(ctx, cls)).requestUpdateAll()
+        }
     }
 }
